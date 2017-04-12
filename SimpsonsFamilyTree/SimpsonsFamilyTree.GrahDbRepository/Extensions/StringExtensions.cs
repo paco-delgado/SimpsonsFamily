@@ -15,9 +15,9 @@ namespace SimpsonsFamilyTree.Repository.Neo4j.Extensions
             switch (relation)
             {
                 case "IS_PARENT_OF":
-                    return "Parent";
-                case "IS_CHILD_OF":
                     return "Child";
+                case "IS_CHILD_OF":
+                    return "Parent";
                 case "IS_SIBILING_OF":
                     return "Sibiling";
                 case "IS_PARTNER_OF":

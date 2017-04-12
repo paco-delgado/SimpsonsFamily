@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using SimpsonsFamilyTree.Domain.Model;
+using SimpsonsFamilyTree.Domain.Repository;
+using System.Net;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,20 +14,26 @@ namespace SimpsonsFamilyTree.Web.Controllers
     [Route("[controller]")]
     public class TreeController : Controller
     {
+        private IPeopleRepository PeopleRepository { get; set; }
+
+        public TreeController(IPeopleRepository repository)
+        {
+            PeopleRepository = repository;
+        }
+
         // GET /tree/{id}
         [HttpGet("{id}")]
         public IActionResult Get(long id)
         {
-            return Ok(new ParentsTree {
-                Id = id,
-                Name = "Homer",
-                LastName = "Simpson",
-                Parents = new List<ParentsTree>
-                {
-                    new ParentsTree { Id = 654, Name = "Abraham", LastName = "Simpson" },
-                    new ParentsTree { Id = 987, Name = "Penelope", LastName = "Olsen" }
-                }
-            });
+            try
+            {
+                ParentsTree parentsTree = PeopleRepository.GetParentsTree(id);
+                return parentsTree != null ? (IActionResult)Ok(parentsTree) : NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
         }
     }
 }

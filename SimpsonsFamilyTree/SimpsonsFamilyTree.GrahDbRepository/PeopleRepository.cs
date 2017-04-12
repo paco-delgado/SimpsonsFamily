@@ -49,7 +49,6 @@ namespace SimpsonsFamilyTree.Repository.Neo4j
             }
             catch (Exception)
             {
-                // Log the error
                 tx.Failure();
             }
             tx.Success();
@@ -60,7 +59,7 @@ namespace SimpsonsFamilyTree.Repository.Neo4j
         {
             long partnerId = -1;
             var statementTemplate = "MATCH (p:Person)-[:IS_PARTNER_OF]->(n:Person) WHERE ID(p) = {personId} RETURN ID(n) AS partnerId";
-            var statementParameters = new Dictionary<string, object> { { "personId", 22 } };
+            var statementParameters = new Dictionary<string, object> { { "personId", personId } };
             using (var session = Neo4jDriver.Session())
             {
                 var statementResult = session.Run(statementTemplate, statementParameters);
