@@ -12,11 +12,11 @@ namespace SimpsonsFamilyTree.Web.Controllers
     [Route("[controller]")]
     public class PeopleController : Controller
     {
-        private IPeopleRepository PeopleRepository { get; set; }
+        private IPeopleRepository _peopleRepository;
 
         public PeopleController(IPeopleRepository repository)
         {
-            PeopleRepository = repository;
+            _peopleRepository = repository;
         }
 
         // GET /people/{id}
@@ -25,7 +25,7 @@ namespace SimpsonsFamilyTree.Web.Controllers
         {
             try
             {
-                Person person = PeopleRepository.GetPerson(id);
+                Person person = _peopleRepository.GetPerson(id);
                 return person != null ? (IActionResult) Ok(person) : NoContent();
             }
             catch (Exception ex)
@@ -40,7 +40,7 @@ namespace SimpsonsFamilyTree.Web.Controllers
         {
             try
             {
-                List<PersonFamily> personFamily = PeopleRepository.GetFamily(id);
+                List<PersonFamily> personFamily = _peopleRepository.GetFamily(id);
                 return Ok(personFamily);
             }
             catch (Exception ex)
@@ -59,12 +59,12 @@ namespace SimpsonsFamilyTree.Web.Controllers
                 {
                     return BadRequest("Person can't be null.");
                 }
-                long partnerId = PeopleRepository.GetPartnerId(id);
+                long partnerId = _peopleRepository.GetPartnerId(id);
                 if (partnerId == -1)
                 {
                     return BadRequest($"Partner not found for person with id {id}. Child can't be added");
                 }
-                long childId = PeopleRepository.AddChild(body, new List<long> { id, partnerId });
+                long childId = _peopleRepository.AddChild(body, new List<long> { id, partnerId });
                 if (childId == -1)
                 {
                     return StatusCode((int)HttpStatusCode.InternalServerError, $"Child couldn't be added. An error occurred.");

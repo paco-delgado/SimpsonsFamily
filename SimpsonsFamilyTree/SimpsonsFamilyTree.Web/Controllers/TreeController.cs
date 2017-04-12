@@ -14,11 +14,11 @@ namespace SimpsonsFamilyTree.Web.Controllers
     [Route("[controller]")]
     public class TreeController : Controller
     {
-        private IPeopleRepository PeopleRepository { get; set; }
+        private IPeopleRepository _peopleRepository;
 
         public TreeController(IPeopleRepository repository)
         {
-            PeopleRepository = repository;
+            _peopleRepository = repository;
         }
 
         // GET /tree/{id}
@@ -27,7 +27,7 @@ namespace SimpsonsFamilyTree.Web.Controllers
         {
             try
             {
-                ParentsTree parentsTree = PeopleRepository.GetParentsTree(id);
+                ParentsTree parentsTree = _peopleRepository.GetParentsTree(id);
                 return parentsTree != null ? (IActionResult)Ok(parentsTree) : NoContent();
             }
             catch (Exception ex)

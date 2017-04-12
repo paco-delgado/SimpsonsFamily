@@ -11,16 +11,16 @@ namespace SimpsonsFamilyTree.Repository.Neo4j
 {
     public class PeopleRepository : IPeopleRepository
     {
-        public IDriver Neo4jDriver { get; private set; }
+        public IDriver _neo4jDriver;
 
         public PeopleRepository(string dbUrl, string user, string password)
         {
-            Neo4jDriver = GraphDatabase.Driver(dbUrl, AuthTokens.Basic(user, password));
+            _neo4jDriver = GraphDatabase.Driver(dbUrl, AuthTokens.Basic(user, password));
         }
 
         public long AddChild(Person child, IEnumerable<long> parentsIds)
         {
-            using (var session = Neo4jDriver.Session())
+            using (var session = _neo4jDriver.Session())
             {
                 return session.WriteTransaction(tx => AddChild(tx, child, parentsIds));
             }
@@ -60,7 +60,7 @@ namespace SimpsonsFamilyTree.Repository.Neo4j
             long partnerId = -1;
             var statementTemplate = "MATCH (p:Person)-[:IS_PARTNER_OF]->(n:Person) WHERE ID(p) = {personId} RETURN ID(n) AS partnerId";
             var statementParameters = new Dictionary<string, object> { { "personId", personId } };
-            using (var session = Neo4jDriver.Session())
+            using (var session = _neo4jDriver.Session())
             {
                 var statementResult = session.Run(statementTemplate, statementParameters);
                 var record = statementResult.SingleOrDefault();
@@ -77,7 +77,7 @@ namespace SimpsonsFamilyTree.Repository.Neo4j
             var personFamilyList = new List<PersonFamily>();
             var statementTemplate = "MATCH (p:Person)-[r]->(m) WHERE ID(p) = {Id} RETURN m, r";
             var statementParameters = new Dictionary<string, object> { { "Id", id } };
-            using (var session = Neo4jDriver.Session())
+            using (var session = _neo4jDriver.Session())
             {
                 var statementResult = session.Run(statementTemplate, statementParameters);
                 foreach (var record in statementResult)
@@ -102,7 +102,7 @@ namespace SimpsonsFamilyTree.Repository.Neo4j
             ParentsTree parentsTree = null;
             string statementTemplate = "MATCH (parent:Person)-[r:IS_PARENT_OF*]->(child:Person) WHERE ID(child) = {Id} RETURN parent, child, r, LENGTH(r) AS c ORDER BY c";
             var statementParameters = new Dictionary<string, object> { { "Id", id } };
-            using (var session = Neo4jDriver.Session())
+            using (var session = _neo4jDriver.Session())
             {
                 var result = session.Run(statementTemplate, statementParameters);
                 foreach (var record in result)
@@ -150,7 +150,7 @@ namespace SimpsonsFamilyTree.Repository.Neo4j
         {
             var statementTemplate = "MATCH (p:Person) WHERE ID(p) = {Id} RETURN p";
             var statementParameters = new Dictionary<string, object> { { "Id", id } };
-            using (var session = Neo4jDriver.Session())
+            using (var session = _neo4jDriver.Session())
             {
                 var statementResult = session.Run(statementTemplate, statementParameters);
                 var record = statementResult.SingleOrDefault();
