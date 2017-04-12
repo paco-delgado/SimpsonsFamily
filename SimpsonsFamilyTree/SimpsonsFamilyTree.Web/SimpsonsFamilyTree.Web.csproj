@@ -19,6 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SimpsonsFamilyTree.Domain\SimpsonsFamilyTree.Domain.csproj" />
+    <ProjectReference Include="..\SimpsonsFamilyTree.GrahDbRepository\SimpsonsFamilyTree.Repository.Neo4j.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SimpsonsFamilyTree.Domain.Repository;
+using SimpsonsFamilyTree.Web.Support;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace SimpsonsFamilyTree.Web
@@ -36,6 +34,9 @@ namespace SimpsonsFamilyTree.Web
             {
                 c.SwaggerDoc("v1", new Info { Title = "Simpsons Family Tree", Version = "1.0" });
             });
+
+            // Add repository as singleton
+            services.AddSingleton(PeopleRepositoryFactory.Create(Configuration));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
