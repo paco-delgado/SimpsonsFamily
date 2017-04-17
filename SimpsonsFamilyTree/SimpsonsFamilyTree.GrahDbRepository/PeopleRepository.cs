@@ -100,47 +100,39 @@ namespace SimpsonsFamilyTree.Repository.Neo4j
         public ParentsTree GetParentsTree(long id)
         {
             ParentsTree parentsTree = null;
-            string statementTemplate = "MATCH (parent:Person)-[r:IS_PARENT_OF*]->(child:Person) WHERE ID(child) = {Id} RETURN parent, child, r, LENGTH(r) AS c ORDER BY c";
+            // With this MATCH we will get all paths throw IS_PARENT_OF that end with the Person with the filtered {Id}
+            // Variable r will contain a list of Relations starting from the top parent, i.e. Person1 -> Person2 -> PersonN -> Child
+            // So using head function we will always take just the first relation from the list (i.e. Person1-> Person2)
+            // Then, this statement will return a Paret, Child pair on each record.
+            string statementTemplate = "MATCH ()-[r:IS_PARENT_OF*]->(c:Person) WHERE ID(c) = {Id} RETURN endNode(head(r)) as child, startNode(head(r)) as parent order by length(r)";
             var statementParameters = new Dictionary<string, object> { { "Id", id } };
             using (var session = _neo4jDriver.Session())
             {
                 var result = session.Run(statementTemplate, statementParameters);
+                // We will use this dictionary to allocate each Person just once on memory, since the same Person can appear more than once on the result (as child and as parent)
+                var people = new Dictionary<long, ParentsTree>();
                 foreach (var record in result)
                 {
-                    if (parentsTree == null)
+                    ParentsTree child;
+                    ParentsTree parent;
+                    if (!people.TryGetValue(record["child"].As<INode>().Id, out child))
                     {
-                        var child = record["child"].As<INode>();
-                        parentsTree = new ParentsTree
+                        // If the child is not found in the dictionary we will create the person (ParentsTree) and will add it to the dictionary
+                        child = record["child"].As<INode>().ConvertToParentsTree();
+                        people.Add(child.Id, child);
+                        if (parentsTree == null)
                         {
-                            Id = child.Id,
-                            Name = child["Name"].As<string>(),
-                            LastName = child["LastName"].As<string>(),
-                            Parents = new List<ParentsTree>()
-                        };
+                            // We will assign the first child we find to the result as the query is ordered by the length of relations list.
+                            parentsTree = child;
+                        }
                     }
-                    var relations = record["r"].As<List<IRelationship>>();
-                    var parent = record["parent"].As<INode>();
-                    if (relations[0].EndNodeId == parentsTree.Id)
+                    if (!people.TryGetValue(record["parent"].As<INode>().Id, out parent))
                     {
-                        parentsTree.Parents.Add(new ParentsTree
-                        {
-                            Id = parent.Id,
-                            Name = parent["Name"].As<string>(),
-                            LastName = parent["LastName"].As<string>(),
-                            Parents = new List<ParentsTree>()
-                        });
+                        // If the parent is not found in the dictionary we will create the person (ParentsTree) and will add it to the dictionary
+                        parent = record["parent"].As<INode>().ConvertToParentsTree();
+                        people.Add(parent.Id, parent);
                     }
-                    else
-                    {
-                        var parentFound = parentsTree.GetParents().SingleOrDefault(p => p.Id == relations[0].EndNodeId);
-                        parentFound.Parents.Add(new ParentsTree
-                        {
-                            Id = parent.Id,
-                            Name = parent["Name"].As<string>(),
-                            LastName = parent["LastName"].As<string>(),
-                            Parents = new List<ParentsTree>()
-                        });
-                    }
+                    child.Parents.Add(parent);
                 }
             }
             return parentsTree;
